@@ -1,5 +1,12 @@
+from src.ingestion.pipeline import IngestionPipeline
+
 def main():
-    print("Hello from information-extraction!")
+    pipeline = IngestionPipeline(
+        input_dir="data/raw_pdfs",
+        output_dir="data/markdown"
+    )
+
+    pipeline.run()
 
 
 if __name__ == "__main__":
