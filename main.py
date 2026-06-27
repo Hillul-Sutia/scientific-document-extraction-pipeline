@@ -2,8 +2,8 @@ from src.ingestion.pipeline import IngestionPipeline
 from src.preprocessing.pipeline import PreprocessingPipeline
 
 def main():
-    RUN_INGESTION = False
-    RUN_PREPROCESSING = True
+    RUN_INGESTION = True
+    RUN_PREPROCESSING = False
 
     if RUN_INGESTION:
         pipeline = IngestionPipeline(

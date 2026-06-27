@@ -1,9 +1,0 @@
-pandas 
-pydantic 
-python-dotenv
-pymupdf 
-pymupdf4llm 
-pdfplumber
-sqlalchemy 
-psycopg2-binary
-ollama
