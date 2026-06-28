@@ -52,5 +52,17 @@ class SectionSplitter:
         if current_content:
             sections[current_section] = "\n".join(current_content).strip()
 
+        sections = { k:v for k,v in sections.items() if len(v)!=0  }
+
+        sections = { k:v for k,v in sections.items() if 'reference' not in k.lower() }
+
+        sections = {k : v for k, v in sections.items() if k != 'UNSPECIFIED'}
+
+        sections = {k : v for k, v in sections.items() if not k.startswith('==>')  }
+
+        sections = {k : v for k, v in sections.items() if any( p not in k.lower() for p in ['citing','citation'])  }
+
+        sections = {k : v for k, v in sections.items() if any( p not in v.lower() for p in ['citing','citation'])  }
+
         return sections
 

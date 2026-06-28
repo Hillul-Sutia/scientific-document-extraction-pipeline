@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "ipykernel>=7.3.0",
     "ollama>=0.6.2",
     "pandas>=3.0.3",
     "pdfplumber>=0.11.10",
@@ -14,4 +15,5 @@ dependencies = [
     "pymupdf4llm>=1.27.2.3",
     "python-dotenv>=1.2.2",
     "sqlalchemy>=2.0.51",
+    "transformers>=5.12.1",
 ]

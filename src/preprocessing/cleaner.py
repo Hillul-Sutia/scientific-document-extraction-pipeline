@@ -11,8 +11,12 @@ class MarkdownCleaner:
         markdown = self._remove_extra_spaces(markdown)
         markdown = self._remove_extra_blank_lines(markdown)
         markdown = self._remove_page_artifacts(markdown)
+        # markdown = self._remove_underscore(markdown)
 
         return markdown.strip()
+
+    def _remove_underscore(self, text: str) -> str:
+        return text.replace('_','')
 
     def _normalize_newlines(self, text: str) -> str:
         return text.replace("\r\n", "\n").replace("\r", "\n")

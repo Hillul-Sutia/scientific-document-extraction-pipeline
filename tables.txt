@@ -1,0 +1,70 @@
+Table 1: Fermented Food Master
+food_id	food_name	category	type	ethnic_group	source_pdf
+
+Example:
+
+| 1 | Axone | Fermented Soybean | Solid Fermented Food | Sumi | paper1.pdf |
+
+Table 2: Raw Materials
+
+| food_id | raw_material | amount | preparation_method |
+
+Example:
+
+| 1 | Soybean | NA | Boiled and fermented |
+
+Table 3: Geographic Distribution
+
+| food_id | state | district | ethnic_group | village |
+
+Example:
+
+| 1 | Nagaland | Zunheboto | Sumi | Akuluto |
+
+Table 4: Nutrition
+
+| food_id | category | parameter | value | unit |
+
+Example:
+
+| 1 | Macronutrient | Protein | 22.5 | g/100g |
+
+Categories:
+
+Macronutrients
+Micronutrients
+Minerals
+Vitamins
+Bioactive compounds
+Table 5: Proximate Composition
+
+| entity_type | entity_name | moisture | ash | protein | fat | fiber | carbohydrate |
+
+Example:
+
+| food | Axone | 8.2 | 1.5 | 22.1 | 12.2 | 5.5 | 50.2 |
+
+Table 6: Microbiome
+
+| food_id | taxonomy_level | taxonomy_name |
+
+Example:
+
+| 1 | Genus | Lactobacillus |
+| 1 | Species | Lactobacillus plantarum |
+
+Taxonomy levels:
+
+Phylum
+Class
+Order
+Family
+Genus
+Species
+Table 7: Predominant Microbes
+
+| food_id | microbe | count | source_pdf |
+
+Example:
+
+| 1 | Lactobacillus plantarum | 8 | paper1.pdf |
