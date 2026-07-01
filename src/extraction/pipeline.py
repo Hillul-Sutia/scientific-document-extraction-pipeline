@@ -38,6 +38,11 @@ class ExtractionPipeline:
 
     def run(self):
         all_records = []
+
+        all_records = self._load_chunks(
+            r'C:\Users\ASUS\Documents\CSIR-NEIST\information_extraction\data\tables\table1\table1_food_master.json'
+        )
+
         seen_foods = set()
 
         json_files = list(self.input_dir.glob("*.json"))
@@ -69,6 +74,7 @@ class ExtractionPipeline:
                     )
 
                     all_records.append( record )
+                pass
     
             table1_records = []
             

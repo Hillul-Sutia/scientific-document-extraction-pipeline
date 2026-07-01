@@ -52,16 +52,7 @@ class Table1Extractor:
             ethnic_group = ''
         )
 
-        data_found = {
-            'category': False,
-            'type': False,
-            'ethnic_group' : False
-        }
-
         for chunk in chunks:
-            response = self.llm_client.generate(prompt)
-            response = response.replace("```json", "").replace("```", "").strip()
-
             # combined_text = "\n\n".join(
             #     chunk["content"] for chunk in chunks
             # )
