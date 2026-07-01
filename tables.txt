@@ -28,6 +28,7 @@ Table 4: Nutrition
 Example:
 
 | 1 | Macronutrient | Protein | 22.5 | g/100g |
+| 1 | Minerals | Protein | 22.5 | g/100g |
 
 Categories:
 
@@ -36,6 +37,9 @@ Micronutrients
 Minerals
 Vitamins
 Bioactive compounds
+
+
+
 Table 5: Proximate Composition
 
 | entity_type | entity_name | moisture | ash | protein | fat | fiber | carbohydrate |
@@ -61,6 +65,7 @@ Order
 Family
 Genus
 Species
+
 Table 7: Predominant Microbes
 
 | food_id | microbe | count | source_pdf |

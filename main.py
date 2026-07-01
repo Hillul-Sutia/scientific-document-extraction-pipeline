@@ -12,6 +12,7 @@ def main():
             input_dir="data/raw_pdfs",
             output_dir="data/markdown"
         )
+        
         pipeline.run()
         
     if RUN_PREPROCESSING:
@@ -26,10 +27,10 @@ def main():
     if RUN_EXTRACTION:
         pipeline = ExtractionPipeline(
             input_dir="data/chunks",
-            output_dir="data/tables/table1"
+            output_dir="data"
         )
 
-    pipeline.run()
+        pipeline.run()
 
 if __name__ == "__main__":
     main()
