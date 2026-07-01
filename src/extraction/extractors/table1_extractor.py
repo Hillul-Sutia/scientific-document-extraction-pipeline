@@ -14,29 +14,12 @@ class Table1Extractor:
 
         food_name_lower = food_name.lower()
 
-        keywords = [
-            "fermented",
-            "tribe",
-            "ethnic",
-            "traditional",
-            "community"
-        ]
-
         for chunk in chunks:
             text = chunk["content"].lower()
 
-            score = 0
-
             if food_name_lower in text:
-                score += 5
 
-            for keyword in keywords:
-                if keyword in text:
-                    relevant_chunks.append(chunk)
-                    score += 1
-
-            # if score >= 5:
-            #     relevant_chunks.append(chunk)
+                relevant_chunks.append(chunk)
 
         return relevant_chunks
     
@@ -91,24 +74,30 @@ class Table1Extractor:
             Text:
             {chunk['content']}
             """
+            try:
+                response = self.llm_client.generate(prompt)
+                response = response.replace("```json", "").replace("```", "").strip()
+                
+                response = json.loads(response)
+                logger.info(f'{food_id} - {food_name} - {response}')
 
-            response = self.llm_client.generate(prompt)
-            response = response.replace("```json", "").replace("```", "").strip()
+                response = {k: v for k,v in response.items() if v is not None }
 
-            logger.info(response)
+                food_metadata.update(response)
+                logger.info(f'{food_metadata}')
 
-            response = json.loads(response)
+            except Exception as e:
+                logger.error(f'{e}'.strip())
 
-            logger.info(response)
-
-            response = {k: v for k,v in response.items() if v != 'null' }
-
-            food_metadata.update(response)
+                er_content = str(response).replace("\n"," ")
+                logger.info( f'{food_id} - {food_name} -  {er_content}' )
 
         return food_metadata
         
     def extract(self, food_id, food_name, chunks, source_pdf):
         relevant_chunks = self.retrieve_relevant_chunks(food_name, chunks)
+        logger.info(f'{food_id} - {food_name} - relevant_chunks : {len(relevant_chunks)}')
+
         metadata = self.extract_metadata(food_id, food_name, relevant_chunks)
 
         record = {

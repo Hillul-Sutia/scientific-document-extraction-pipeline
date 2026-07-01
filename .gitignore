@@ -16,4 +16,4 @@ file_structure.txt
 lib_versions.txt
 requirements.txt
 c_file_structure.txt
-file_structure_generator.py
+generate_file_structure.py

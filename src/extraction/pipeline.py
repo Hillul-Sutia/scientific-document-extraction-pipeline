@@ -40,45 +40,46 @@ class ExtractionPipeline:
         all_records = []
 
         all_records = self._load_chunks(
-            r'C:\Users\ASUS\Documents\CSIR-NEIST\information_extraction\data\tables\table1\table1_food_master.json'
+            r'C:\Users\ASUS\Documents\CSIR-NEIST\information_extraction\data\tables\food_id_name_mapping.json'
         )
 
         seen_foods = set()
 
         json_files = list(self.input_dir.glob("*.json"))
-
+        all_pdf_table1_records = []
         for file in json_files:
-            seen_food_in_a_pdf = set()
+            seen_food_in_a_pdf = [ record for record in all_records if record['source_pdf'] == file.stem ] 
+
             chunks = self._load_chunks(file)
 
             # Food Name Discovery
-            for chunk in chunks:
-                # records = self.food_extractor.extract(chunk)
-                foods = self.food_discovery.extract_food_names_and_validate(chunk)
+            # for chunk in chunks:
+            #     # records = self.food_extractor.extract(chunk)
+            #     foods = self.food_discovery.extract_food_names_and_validate(chunk)
 
                 
-                for food in foods:
+            #     for food in foods:
                     
-                    if food in seen_food_in_a_pdf:
-                        continue
+            #         if food in seen_food_in_a_pdf:
+            #             continue
 
-                    seen_food_in_a_pdf.add(food)
+            #         seen_food_in_a_pdf.add(food)
 
-                    food_id = f"F{len(all_records)+1:03d}"
+            #         food_id = f"F{len(all_records)+1:03d}"
                     
-                    record = dict(
-                        food_id = food_id,
-                        food_name = food,
-                        section = chunk['section'],
-                        source_pdf = file.stem
-                    )
+            #         record = dict(
+            #             food_id = food_id,
+            #             food_name = food,
+            #             section = chunk['section'],
+            #             source_pdf = file.stem
+            #         )
 
-                    all_records.append( record )
-                pass
+            #         all_records.append( record )
+            #     pass
     
-            table1_records = []
+            pdf_table1_records = []
             
-            for food_record in all_records:
+            for food_record in seen_food_in_a_pdf:
                 table1_record = self.table1_extractor.extract(
                     food_record['food_id'],
                     food_record['food_name'],
@@ -86,51 +87,13 @@ class ExtractionPipeline:
                     food_record['source_pdf']
                 )
                 logger.info(table1_record)
-                table1_records.append(table1_record)
+                pdf_table1_records.append(table1_record)
+
+            all_pdf_table1_records.append(pdf_table1_records)
 
             output_path = self.tables_dir / 'table1.json'
-            self._save_output(table1_records, output_path)
+            self._save_output(all_pdf_table1_records, output_path)
 
-            output_path = self.tables_dir / 'food_ids.json'
-            self._save_output(all_records, output_path)
+            # output_path = self.tables_dir / 'food_ids.json'
+            # self._save_output(all_records, output_path)
 
-
-        #         for record in records:
-        #             food_name = record.get("food_name")
-
-        #             if not food_name:
-        #                 continue
-
-        #             key = food_name.lower().strip()
-
-        #             if key in seen_foods:
-        #                 continue
-
-        #             if key in seen_food_in_a_pdf:
-        #                 continue
-
-
-        #             seen_foods.add(key)
-        #             seen_food_in_a_pdf.add(key)
-
-
-        #             record["food_id"] = f"F{len(all_records)+1:03d}"
-        #             record["source_pdf"] = file.name
-        #             logger.info(json.dumps(record))
-                    
-        #             # self._save_output(record)
-        #             all_records.append(record)
-
-        #     req_chunks = []
-        #     req_chunks = [ chunk for chunk in chunks if any(seen_food_in_a_pdf) in chunk['content'].lower() ]
-
-        #     for food_name in seen_food_in_a_pdf:
-        #         temp_chunks = [ c for c in chunks if food_name in c['content']]
-        #         req_chunks.extend(temp_chunks)
-
-        #         if food_name in chunk['content']:
-        #             records = self.food_extractor.extract(chunk)
-
-            
-
-        # self._save_output(all_records)
