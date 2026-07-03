@@ -3,7 +3,8 @@ from pathlib import Path
 
 from src.extraction.llm_client import LLMClient
 from src.extraction.food_discovery import FoodDiscovery
-from src.extraction.extractors.table1_extractor import Table1Extractor 
+from src.extraction.extractors.table1_extractor import Table1Extractor
+from src.extraction.extractors.table2_extractor import Table2Extractor
 from src.extraction.extractors.food_master_extractor import FoodMasterExtractor
 
 from src.utils.logger import setup_logger
@@ -25,6 +26,7 @@ class ExtractionPipeline:
         # self.food_extractor = FoodMasterExtractor(self.llm_client)
         self.food_discovery = FoodDiscovery(self.llm_client)
         self.table1_extractor = Table1Extractor(self.llm_client)
+        self.table2_extractor = Table2Extractor(self.llm_client)
     
     def _load_chunks(self, filepath):
         with open(filepath, "r", encoding="utf-8") as f:
@@ -46,17 +48,19 @@ class ExtractionPipeline:
         seen_foods = set()
 
         json_files = list(self.input_dir.glob("*.json"))
+        
         all_pdf_table1_records = []
+        all_pdf_table2_records = []
+
         for file in json_files:
             seen_food_in_a_pdf = [ record for record in all_records if record['source_pdf'] == file.stem ] 
 
             chunks = self._load_chunks(file)
 
-            # Food Name Discovery
+            # ---------------------------------------- Food Name Discovery ---------------------------------------- #
             # for chunk in chunks:
             #     # records = self.food_extractor.extract(chunk)
             #     foods = self.food_discovery.extract_food_names_and_validate(chunk)
-
                 
             #     for food in foods:
                     
@@ -75,24 +79,55 @@ class ExtractionPipeline:
             #         )
 
             #         all_records.append( record )
-            #     pass
+            # ---------------------------------------------------------------------------------------------------- # 
     
             pdf_table1_records = []
+            pdf_table2_records = []
             
             for food_record in seen_food_in_a_pdf:
-                table1_record = self.table1_extractor.extract(
-                    food_record['food_id'],
-                    food_record['food_name'],
-                    chunks,
-                    food_record['source_pdf']
+                food_id = food_record['food_id']
+                food_name = food_record['food_name']
+                source_pdf = food_record['source_pdf']
+
+                # ------------------------------------- Table Extraction --------------------------------------- #
+                # ------------------------- Table 1 ------------------------- #
+                # table1_record = self.table1_extractor.extract(
+                #     food_id,
+                #     food_name,
+                #     chunks,
+                #     source_pdf
+                # )
+
+                # logger.info(table1_record)
+
+                # pdf_table1_records.append(table1_record)
+
+                # ------------------------- Table 2 ------------------------- #
+                table2_records =  self.table2_extractor.extract(
+                    food_id, 
+                    food_name, 
+                    chunks    
                 )
-                logger.info(table1_record)
-                pdf_table1_records.append(table1_record)
 
-            all_pdf_table1_records.append(pdf_table1_records)
+                pdf_table2_records.append(table2_records)
+                # -------------------------------------------------------------------------------------------- #
+                
+            # -------------- For all pdfs - Updated as File processed | Below code at file level |
 
-            output_path = self.tables_dir / 'table1.json'
-            self._save_output(all_pdf_table1_records, output_path)
+            # ---------------------- Storing data as JSON files --------------------- # 
+            # ----------------------------> Table 1 <---------------------------- #
+            # all_pdf_table1_records.append(pdf_table1_records)
+            
+            # output_path = self.tables_dir / 'table1.json'
+            # self._save_output(all_pdf_table1_records, output_path)
+
+            # ----------------------------> Table 2 <---------------------------- #
+            all_pdf_table2_records.append( pdf_table2_records )
+
+            output_path = self.tables_dir / 'table2.json'
+            self._save_output(all_pdf_table2_records, output_path)
+
+            # ---------------------- Storing data as JSON files --------------------- # 
 
             # output_path = self.tables_dir / 'food_ids.json'
             # self._save_output(all_records, output_path)
