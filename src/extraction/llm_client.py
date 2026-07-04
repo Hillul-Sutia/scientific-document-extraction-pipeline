@@ -20,9 +20,7 @@ import ollama
 class LLMClient:
     def __init__(self, model="qwen2.5:7b"):
         self.model = model
-
-    def generate(self, prompt: str) -> str:
-        system_prompt = """
+        self.system_prompt = """
         You are an expert food science information extraction assistant.
 
         Your task is to extract fermented food information from research papers.
@@ -34,12 +32,13 @@ class LLMClient:
         4. If information is missing, return null.
         """
 
+    def generate(self, prompt: str) -> str:
         response = ollama.chat(
             model=self.model,
             messages=[
                 {
                     "role": "system",
-                    "content": system_prompt
+                    "content": self.system_prompt
                 },
                 {
                     "role": "user",

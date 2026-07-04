@@ -13,27 +13,31 @@ class Table3Extractor:
 
         food_name_lower = food_name.lower()
 
-        keywords = [
-            "district",
-            "state",
-            "tribe",
-            "village",
-            "community",
-            "region"
-        ]
+        # keywords = [
+        #     "district",
+        #     "state",
+        #     "tribe",
+        #     "village",
+        #     "community",
+        #     "region"
+        # ]
+
         for chunk in chunks:
             text = chunk["content"].lower()
 
-            score = 0
+            # score = 0
+
+            # if food_name_lower in text:
+            #     score += 5
+
+            # for keyword in keywords:
+            #     if keyword in text:
+            #         score += 1
+
+            # if score >= 5:
+            #     relevant_chunks.append(chunk)
 
             if food_name_lower in text:
-                score += 5
-
-            for keyword in keywords:
-                if keyword in text:
-                    score += 1
-
-            if score >= 5:
                 relevant_chunks.append(chunk)
         return relevant_chunks
     

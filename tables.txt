@@ -30,6 +30,20 @@ Example:
 | 1 | Macronutrient | Protein | 22.5 | g/100g |
 | 1 | Minerals | Protein | 22.5 | g/100g |
 
+
+Table 4 — Nutrition (Generic, long format)
+
+Schema:
+
+| food_id | category | parameter | value | unit |
+
+Example:
+
+food_id	category	parameter	value	unit
+F001	Proximate Composition	Moisture	8.2	%
+F001	Proximate Composition	Protein	22.4	g/100g
+F001	Mineral Composition	Calcium	55	mg
+
 Categories:
 
 Macronutrients

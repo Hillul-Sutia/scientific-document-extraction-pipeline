@@ -2,9 +2,12 @@ from src.ingestion.pipeline import IngestionPipeline
 from src.preprocessing.pipeline import PreprocessingPipeline
 from src.extraction.pipeline import ExtractionPipeline
 
+from src.utils.timer import timer
+
+@timer
 def main():
-    RUN_INGESTION = False
-    RUN_PREPROCESSING = False
+    RUN_INGESTION = True
+    RUN_PREPROCESSING = True
     RUN_EXTRACTION = True # False
 
     if RUN_INGESTION:

@@ -4,7 +4,7 @@ from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-class Table2Extractor:
+class Table4Extractor:
     def __init__(self, llm_client):
         self.llm_client = llm_client
 
@@ -13,13 +13,19 @@ class Table2Extractor:
 
         food_name_lower = food_name.lower()
 
-        # keywords = [
-        #     "ingredient",
-        #     "raw material",
-        #     "prepared from",
-        #     "made from",
-        #     "preparation"
-        # ]
+        keywords = [
+            "nutrition",
+            "nutritional",
+            "composition",
+            "protein",
+            "fat",
+            "moisture",
+            "ash",
+            "carbohydrate",
+            "energy",
+            "mineral",
+            "vitamin"
+        ]
 
         for chunk in chunks:
             text = chunk["content"].lower()
@@ -35,42 +41,61 @@ class Table2Extractor:
 
             # if score >= 5:
             #     relevant_chunks.append(chunk)
- 
+            
             if food_name_lower in text:
                 relevant_chunks.append(chunk)
 
         return relevant_chunks
     
-    def extract_raw_materials(self, food_id, food_name, chunks):
+    def extract_nutrition(self, food_id, food_name, chunks):
         if not chunks:
             return []
-        
+
         all_records = []
 
         for chunk in chunks:
             prompt = f"""
-            Extract raw material details for fermented food.
+            Extract nutritional information for fermented food.
 
             Food name:
             {food_name}
 
             Return JSON array only.
+
             Schema:
             [
                 {{
-                    "raw_material": string or null,
-                    "amount": string or null,
-                    "preparation_method": string or null
+                    "category": string or null,
+                    "parameter": string or null,
+                    "value": string or null,
+                    "unit": string or null
                 }}
             ]
 
             Rules:
-            - Extract only explicit data.
+            - Extract only explicit nutritional information.
             - Do not generate synthetic values.
-            - raw_material = ingredient used to prepare food.
-            - amount = quantity if explicitly mentioned.
-            - preparation_method = preparation step if explicitly mentioned.
-            - Return [] if no raw material info found.
+            - Return [] if no nutritional data exists.
+            - category examples:
+                Nutrition
+                Proximate Composition
+                Mineral Composition
+                Vitamin Composition
+            - parameter examples:
+                Protein
+                Fat
+                Moisture
+                Ash
+                Carbohydrate
+                Energy
+                Calcium
+                Iron
+            - value should be numerical if present.
+            - unit examples:
+                g/100g
+                %
+                mg
+                kcal
             - Output valid JSON only.
 
             Text:
@@ -83,19 +108,20 @@ class Table2Extractor:
                 records = json.loads(response)
 
                 logger.info(f"{food_id} - {food_name} - {records}")
+
                 for record in records:
-                    if not record.get("raw_material"):
+                    if not record.get("parameter"):
                         continue
 
                     final_record = {
                         "food_id": food_id,
-                        "raw_material": record.get("raw_material"),
-                        "amount": record.get("amount"),
-                        "preparation_method": record.get("preparation_method")
+                        "category": record.get("category"),
+                        "parameter": record.get("parameter"),
+                        "value": record.get("value"),
+                        "unit": record.get("unit")
                     }
 
                     all_records.append(final_record)
-
             except Exception as e:
                 logger.error(str(e))
 
@@ -105,7 +131,10 @@ class Table2Extractor:
         for record in all_records:
             key = (
                 record["food_id"],
-                record["raw_material"]
+                record["category"],
+                record["parameter"],
+                record["value"],
+                record["unit"]
             )
 
             if key not in seen:
@@ -114,7 +143,6 @@ class Table2Extractor:
 
         return deduplicated
     
-
     def extract(self, food_id, food_name, chunks):
         relevant_chunks = self.retrieve_relevant_chunks(food_name, chunks)
 
@@ -122,9 +150,8 @@ class Table2Extractor:
             f"{food_id} - {food_name} - relevant_chunks: {len(relevant_chunks)}"
         )
 
-        return self.extract_raw_materials(
+        return self.extract_nutrition(
             food_id,
             food_name,
             relevant_chunks
         )
-            
