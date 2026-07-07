@@ -22,6 +22,9 @@ class TableParser:
             if block.strip()
         ]
     
+    # def _is_same_table():
+
+    
     def _parse_section(self, content: str) -> dict:
         """
         Parse one section into:
@@ -36,6 +39,7 @@ class TableParser:
         tables = []
         current_table = []
         inside_table = False
+        table_heading_detected = ''
 
         for line in lines:
             stripped = line.strip()

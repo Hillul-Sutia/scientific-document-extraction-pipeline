@@ -68,7 +68,6 @@ class PreprocessingPipeline:
 
         processed_count = 0
         failed_count = 0
-        
 
         for md_file in markdown_files:
             try:

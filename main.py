@@ -6,8 +6,8 @@ from src.utils.timer import timer
 
 @timer
 def main():
-    RUN_INGESTION = True
-    RUN_PREPROCESSING = True
+    RUN_INGESTION = False
+    RUN_PREPROCESSING = False
     RUN_EXTRACTION = True # False
 
     if RUN_INGESTION:
