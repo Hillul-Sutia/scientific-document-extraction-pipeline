@@ -1,46 +1,16 @@
 import json
-import re
 
+from src.utils.token_count import count_token
 from src.utils.logger import setup_logger
-
 logger = setup_logger(__name__)
 
 class Table1Extractor:
     def __init__(self, llm_client):
         self.llm_client = llm_client
-
-    def retrieve_relevant_chunks(self, food_name, chunks):
-        relevant_chunks = []
-
-        food_name_lower = food_name.lower()
-
-        for chunk in chunks:
-            text = chunk["content"].lower()
-
-            if food_name_lower in text:
-
-                relevant_chunks.append(chunk)
-
-        return relevant_chunks
-    
-    def extract_metadata(self, food_id, food_name, chunks):
-        if not chunks:
-            return {}
         
-        food_metadata = dict(
-            food_id = food_id,
-            food_name = food_name,
-            category = '',
-            type = '',
-            ethnic_group = ''
-        )
 
-        for chunk in chunks:
-            # combined_text = "\n\n".join(
-            #     chunk["content"] for chunk in chunks
-            # )
-
-            prompt = f"""
+    def _prepare_prompt(self, food_name, chunk):
+        prompt = f"""
             Extract metadata for fermented food.
 
             Food name:
@@ -74,6 +44,46 @@ class Table1Extractor:
             Text:
             {chunk['content']}
             """
+        return prompt
+
+    def retrieve_relevant_chunks(self, food_name, chunks):
+        relevant_chunks = []
+
+        food_name_lower = food_name.lower()
+
+        for chunk in chunks:
+            text = chunk["content"].lower()
+
+            if food_name_lower in text:
+
+                relevant_chunks.append(chunk)
+
+        return relevant_chunks
+    
+    def extract_metadata(self, food_id, food_name, chunks):
+        if not chunks:
+            return {}
+        
+        food_metadata = dict(
+            food_id = food_id,
+            food_name = food_name,
+            category = '',
+            type = '',
+            ethnic_group = ''
+        )
+
+        for chunk in chunks:
+            # combined_text = "\n\n".join(
+            #     chunk["content"] for chunk in chunks
+            # )
+            prompt = self._prepare_prompt( food_name, chunk)
+
+            prompt_tc = count_token(prompt)
+            content_tc = count_token(chunk['content'])
+
+            logger.info(f"prompt_tc  : {prompt_tc}")
+            logger.info(f"content_tc : {content_tc}")
+
             try:
                 response = self.llm_client.generate(prompt)
                 response = response.replace("```json", "").replace("```", "").strip()

@@ -1,13 +1,57 @@
 import json
 
+from src.utils.token_count import count_token
 from src.utils.logger import setup_logger
-
 logger = setup_logger(__name__)
 
 class Table6Extractor:
     def __init__(self, llm_client):
         self.llm_client = llm_client
 
+    def _prepare_prompt(self, food_name, chunk):
+        prompt = f"""
+Extract microbiome information for the fermented food.
+
+Food name:
+{food_name}
+
+Return JSON array only.
+
+Schema:
+
+{{
+    "taxonomy_level": string or null,
+    "taxonomy_name": string or null
+}}
+
+
+Allowed taxonomy levels:
+- phylum
+- class
+- order
+- family
+- genus
+- species
+
+Rules:
+- Extract ONLY microorganisms explicitly mentioned.
+- Do NOT generate synthetic values.
+- taxonomy_name must exactly match the text.
+- Infer taxonomy_level only when it is obvious from the scientific name.
+    Example:
+    Lactobacillus plantarum -> species
+    Lactobacillus -> genus
+- If taxonomy level cannot be determined confidently,
+use null.
+- Ignore food names, ingredients, nutrients and places.
+- Return [] if no microbiome information exists.
+- Output valid JSON only.
+
+Text:
+{chunk["content"]}
+"""
+        return prompt
+    
     def retrieve_relevant_chunks(self, food_name, chunks):
         relevant_chunks = []
 
@@ -50,47 +94,13 @@ class Table6Extractor:
         all_records = []
 
         for chunk in chunks:
-            prompt = f"""
-            Extract microbiome information for the fermented food.
+            prompt = self._prepare_prompt( food_name, chunk)
 
-            Food name:
-            {food_name}
+            prompt_tc = count_token(prompt)
+            content_tc = count_token(chunk['content'])
 
-            Return JSON array only.
-
-            Schema:
-            [
-                {{
-                    "taxonomy_level": string or null,
-                    "taxonomy_name": string or null
-                }}
-            ]
-
-            Allowed taxonomy levels:
-            - phylum
-            - class
-            - order
-            - family
-            - genus
-            - species
-
-            Rules:
-            - Extract ONLY microorganisms explicitly mentioned.
-            - Do NOT generate synthetic values.
-            - taxonomy_name must exactly match the text.
-            - Infer taxonomy_level only when it is obvious from the scientific name.
-                Example:
-                Lactobacillus plantarum -> species
-                Lactobacillus -> genus
-            - If taxonomy level cannot be determined confidently,
-            use null.
-            - Ignore food names, ingredients, nutrients and places.
-            - Return [] if no microbiome information exists.
-            - Output valid JSON only.
-
-            Text:
-            {chunk["content"]}
-            """
+            logger.info(f"prompt_tc  : {prompt_tc}")
+            logger.info(f"content_tc : {content_tc}")
 
             try:
                 response = self.llm_client.generate(prompt)

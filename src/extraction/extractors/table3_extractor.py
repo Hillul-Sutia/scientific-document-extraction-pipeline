@@ -1,12 +1,45 @@
 import json
 
+from src.utils.token_count import count_token
 from src.utils.logger import setup_logger
-
 logger = setup_logger(__name__)
 
 class Table3Extractor:
     def __init__(self, llm_client):
         self.llm_client = llm_client
+
+    def _prepare_prompt(self, food_name, chunk):
+        prompt = f"""
+        Extract geographic distribution for fermented food.
+
+        Food name:
+        {food_name}
+
+        Return JSON array only.
+        Schema:
+        [
+            {{
+                "state": string or null,
+                "district": string or null,
+                "ethnic_group": string or null,
+                "village": string or null
+            }}
+        ]
+
+        Rules:
+        - Extract only explicit information.
+        - Do not generate synthetic data.
+        - state = state name if mentioned.
+        - district = district name if mentioned.
+        - ethnic_group = tribe/community if mentioned.
+        - village = village/locality if mentioned.
+        - Return [] if no geographic information found.
+        - Output valid JSON only.
+
+        Text:
+        {chunk["content"]}
+        """
+        return prompt
 
     def retrieve_relevant_chunks(self, food_name, chunks):
         relevant_chunks = []
@@ -47,36 +80,14 @@ class Table3Extractor:
         all_records = []
 
         for chunk in chunks:
-            prompt = f"""
-            Extract geographic distribution for fermented food.
+            prompt = self._prepare_prompt( food_name, chunk)
 
-            Food name:
-            {food_name}
+            prompt_tc = count_token(prompt)
+            content_tc = count_token(chunk['content'])
 
-            Return JSON array only.
-            Schema:
-            [
-                {{
-                    "state": string or null,
-                    "district": string or null,
-                    "ethnic_group": string or null,
-                    "village": string or null
-                }}
-            ]
+            logger.info(f"prompt_tc  : {prompt_tc}")
+            logger.info(f"content_tc : {content_tc}")
 
-            Rules:
-            - Extract only explicit information.
-            - Do not generate synthetic data.
-            - state = state name if mentioned.
-            - district = district name if mentioned.
-            - ethnic_group = tribe/community if mentioned.
-            - village = village/locality if mentioned.
-            - Return [] if no geographic information found.
-            - Output valid JSON only.
-
-            Text:
-            {chunk["content"]}
-            """
             try:
                 response = self.llm_client.generate(prompt)
                 response = response.replace("```json", "").replace("```", "").strip()

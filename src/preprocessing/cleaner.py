@@ -1,19 +1,10 @@
 import re
 
 class MarkdownCleaner:
-    def clean(self, markdown: str) -> str:
-        """
-        Clean extracted markdown text.
-        """
-
-        markdown = self._normalize_newlines(markdown)
-        markdown = self._remove_hyphenated_linebreaks(markdown)
-        markdown = self._remove_extra_spaces(markdown)
-        markdown = self._remove_extra_blank_lines(markdown)
-        markdown = self._remove_page_artifacts(markdown)
-        # markdown = self._remove_underscore(markdown)
-
-        return markdown.strip()
+    def _remove_references(self, text: str) -> str:
+        # Removes citations like [1], [1-3], [79–82], [1,2], [1, 3-5]
+        pattern = r'\[\s*[\d,\-–—\s]+\s*\]'
+        return re.sub(pattern, '', text)
 
     def _remove_underscore(self, text: str) -> str:
         return text.replace('_','')
@@ -60,3 +51,18 @@ class MarkdownCleaner:
             cleaned_lines.append(line)
 
         return "\n".join(cleaned_lines)
+    
+    def clean(self, markdown: str) -> str:
+        """
+        Clean extracted markdown text.
+        """
+
+        markdown = self._normalize_newlines(markdown)
+        markdown = self._remove_hyphenated_linebreaks(markdown)
+        markdown = self._remove_extra_spaces(markdown)
+        markdown = self._remove_extra_blank_lines(markdown)
+        markdown = self._remove_page_artifacts(markdown)
+        markdown = self._remove_references(markdown)
+        # markdown = self._remove_underscore(markdown)
+
+        return markdown.strip()
