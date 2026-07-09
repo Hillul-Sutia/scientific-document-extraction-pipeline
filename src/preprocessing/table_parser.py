@@ -1,6 +1,9 @@
 import re
 
 class TableParser:
+    # def _is_table_desc(self, line: str) ->:
+
+
     def _is_table_line(self, line: str) -> bool:
         """
         Detect markdown-style table lines.

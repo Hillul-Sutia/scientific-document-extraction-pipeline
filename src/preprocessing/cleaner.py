@@ -2,9 +2,15 @@ import re
 
 class MarkdownCleaner:
     def _remove_references(self, text: str) -> str:
-        # Removes citations like [1], [1-3], [79–82], [1,2], [1, 3-5]
-        pattern = r'\[\s*[\d,\-–—\s]+\s*\]'
-        return re.sub(pattern, '', text)
+        text = re.sub(r'(?:\[\s*)+\d[\d,\-–—\s]*(?:\s*\])+', '', text)
+
+        while True:
+            new = re.sub(r'\[\s*\]', '', text)
+            if new == text:
+                break
+            text = new
+
+        return text
 
     def _remove_underscore(self, text: str) -> str:
         return text.replace('_','')

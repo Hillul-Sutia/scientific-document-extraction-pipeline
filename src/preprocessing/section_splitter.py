@@ -58,7 +58,8 @@ class SectionSplitter:
         if current_content:
             sections[current_section] = "\n".join(current_content).strip()
 
-        # logger.info(sections.keys())
+        # logger.info(f"{sections.keys()}")
+
         # sections = { k:v for k,v in sections.items() if len(v)!=0  }
 
         # sections = { k:v for k,v in sections.items() if 'reference' not in k.lower() }
@@ -78,6 +79,12 @@ class SectionSplitter:
         remove_section = False
 
         for k,v in sections.items():
+            temp = k.split()
+            temp = ''.join(temp)
+            if 'abstract' in temp.lower():
+                add_section = True
+                continue
+
             if 'introduction' in k.lower():
                 req_sections[k] = v
                 add_section = True
