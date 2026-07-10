@@ -6,6 +6,8 @@ WORKDIR /app
 
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+ENV UV_HTTP_TIMEOUT=300
+# ENV UV_HTTP_TIMEOUT=600
 
 # Copy only dependency metadata
 COPY pyproject.toml uv.lock ./
