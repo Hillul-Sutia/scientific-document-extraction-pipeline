@@ -1,5 +1,7 @@
+import os
 import ollama
 from src.utils.token_count import count_token
+
 # class LLMClient:
 #     def __init__(self, model="qwen2.5:7b"):
 #         self.model = model
@@ -20,6 +22,13 @@ from src.utils.token_count import count_token
 class LLMClient:
     def __init__(self, model="qwen2.5:7b"):
         self.model = model
+        self.client = ollama.Client(
+            host=os.getenv(
+                "OLLAMA_HOST",
+                "http://localhost:11434"
+            )
+        )
+
         self.system_prompt = """
         You are an expert food science information extraction assistant.
 
@@ -33,7 +42,7 @@ class LLMClient:
         """
 
     def generate(self, prompt: str) -> str:
-        response = ollama.chat(
+        response = self.client.chat(
             model=self.model,
             messages=[
                 {
@@ -48,3 +57,20 @@ class LLMClient:
         )
 
         return response["message"]["content"]
+
+    # def generate(self, prompt: str) -> str:
+    #     response = ollama.chat(
+    #         model=self.model,
+    #         messages=[
+    #             {
+    #                 "role": "system",
+    #                 "content": self.system_prompt
+    #             },
+    #             {
+    #                 "role": "user",
+    #                 "content": prompt
+    #             }
+    #         ]
+    #     )
+
+    #     return response["message"]["content"]
