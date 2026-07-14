@@ -8,7 +8,7 @@ from src.utils.timer import timer
 def main():
     RUN_INGESTION = True
     RUN_PREPROCESSING = True
-    RUN_EXTRACTION = False # False
+    RUN_EXTRACTION = True # False
 
     if RUN_INGESTION:
         pipeline = IngestionPipeline(

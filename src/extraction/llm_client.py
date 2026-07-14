@@ -20,7 +20,7 @@ from src.utils.token_count import count_token
 #         return response["message"]["content"]
 
 class LLMClient:
-    def __init__(self, model="qwen2.5:7b"):
+    def __init__(self, model="qwen2.5:14b"):
         self.model = model
         self.client = ollama.Client(
             host=os.getenv(

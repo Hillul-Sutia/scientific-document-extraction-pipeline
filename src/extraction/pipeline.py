@@ -105,7 +105,11 @@ class ExtractionPipeline:
             pdf_table4_records = []
             pdf_table5_records = []
             pdf_table6_records = []
+            # ---------------------- Storing data as JSON files --------------------- # 
 
+            output_path = self.tables_dir / 'food_ids.json'
+            self._save_output(food_ids_records, output_path)
+            
             for food_record in seen_food_in_a_pdf:
                 food_id = food_record['food_id']
                 food_name = food_record['food_name']
@@ -153,11 +157,11 @@ class ExtractionPipeline:
                 pdf_table4_records.append( table4_records )
 
                 # # ------------------------- Table 5 ------------------------- #
-                table5_records =  self.table5_extractor.extract(
-                    table4_records
-                )
-                logger.info(table5_records)
-                pdf_table5_records.append( table5_records )
+                # table5_records =  self.table5_extractor.extract(
+                #     table4_records
+                # )
+                # logger.info(table5_records)
+                # pdf_table5_records.append( table5_records )
 
                 # ------------------------- Table 6 ------------------------- #
                 table6_records =  self.table6_extractor.extract(
@@ -198,10 +202,10 @@ class ExtractionPipeline:
             self._save_output(all_pdf_table4_records, output_path)
 
             # # ----------------------------> Table 5 <---------------------------- #
-            all_pdf_table5_records.append( pdf_table5_records )
+            # all_pdf_table5_records.append( pdf_table5_records )
 
-            output_path = self.tables_dir / 'table5.json'
-            self._save_output(all_pdf_table5_records, output_path)
+            # output_path = self.tables_dir / 'table5.json'
+            # self._save_output(all_pdf_table5_records, output_path)
 
             # ----------------------------> Table 6 <---------------------------- #
             all_pdf_table6_records.append( pdf_table6_records )
@@ -209,8 +213,5 @@ class ExtractionPipeline:
             output_path = self.tables_dir / 'table6.json'
             self._save_output(all_pdf_table6_records, output_path)
 
-            # ---------------------- Storing data as JSON files --------------------- # 
 
-            output_path = self.tables_dir / 'food_ids.json'
-            self._save_output(food_ids_records, output_path)
 

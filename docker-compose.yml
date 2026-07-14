@@ -19,7 +19,8 @@ services:
     stdin_open: true
     tty: true
 
-    command: /bin/bash
+    # command: /bin/bash
+    command: python main.py
 
 volumes:
   uv-cache:
