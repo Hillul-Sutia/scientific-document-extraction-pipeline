@@ -9,18 +9,22 @@ services:
     volumes:
       - .:/app
       - uv-cache:/root/.cache/uv
+      - ./.cache/huggingface:/opt/huggingface
+      # - hf-cache:/opt/huggingface
 
     environment:
       OLLAMA_HOST: http://host.docker.internal:11434
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
       UV_PROJECT_ENVIRONMENT: /opt/venv
+      HF_HOME: /opt/huggingface
+      TOKENIZER_LOCAL_FILES_ONLY: "true"
+      TOKENIZER_DOWNLOAD_IF_MISSING: "true"
 
     stdin_open: true
     tty: true
-
-    # command: /bin/bash
     command: python main.py
 
 volumes:
   uv-cache:
+  # hf-cache:

@@ -8,6 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+.cache/
 
 # local files
 data/

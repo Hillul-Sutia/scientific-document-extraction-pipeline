@@ -24,32 +24,44 @@ class MarkdownExtractor:
         self.page_chunks = page_chunks
         self.add_page_markers = add_page_markers
 
-    def extract(self, pdf_path: str):
+    def extract_pages(self, pdf_path: str) -> list[dict]:
+        """Extract a PDF as ordered, page-aware records."""
         try:
-            md = pymupdf4llm.to_markdown(
+            extracted_pages = pymupdf4llm.to_markdown(
                 pdf_path,
-                page_chunks=self.page_chunks,
+                page_chunks=True,
             )
-            logger.info(len(md))
-            logger.info(md[0].keys())
-            
-            if not self.page_chunks:
-                return md
+            pages = []
 
-            if not self.add_page_markers:
-                return md
+            for page_index, page in enumerate(extracted_pages, start=1):
+                metadata = page.get("metadata", {})
+                page_number = metadata.get("page_number", page_index)
+                pages.append({
+                    "page_number": int(page_number),
+                    "content": page.get("text", ""),
+                })
 
-            output = []
-            for page in md:
-                page_no = page["metadata"]["page_number"]
-                output.append(f"<!-- Page {page_no} -->\n")
-                output.append(page["text"])
-                output.append("\n---\n")
-
-            return "".join(output)
+            logger.info("Extracted %s pages from %s", len(pages), pdf_path)
+            return pages
 
         except Exception as e:
             er_msg = f"Error extracting {pdf_path}: {e}"
-            print(er_msg)
-            logger.error(er_msg)
-            return None
+            logger.exception(er_msg)
+            raise
+
+    def render_markdown(self, pages: list[dict]) -> str:
+        """Render page records as a human-readable Markdown artifact."""
+        output = []
+        for page in pages:
+            if self.add_page_markers:
+                output.append(f"<!-- Page {page['page_number']} -->\n")
+            output.append(page["content"])
+            output.append("\n---\n")
+        return "".join(output)
+
+    def extract(self, pdf_path: str):
+        """Backward-compatible Markdown extraction entry point."""
+        pages = self.extract_pages(pdf_path)
+        if self.page_chunks:
+            return self.render_markdown(pages)
+        return "\n".join(page["content"] for page in pages)

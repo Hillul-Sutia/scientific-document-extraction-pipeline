@@ -1,89 +1,103 @@
 Table 1: Fermented Food Master
-food_id	food_name	category	type	ethnic_group	source_pdf
+
+Core schema:
+| food_id | food_name | category | type | ethnic_group | source_pdf |
+
+Definitions:
+- category describes the food substrate/category, for example Fermented Soybean,
+  Fermented Fish, Fermented Vegetable, Fermented Dairy, or Fermented Beverage.
+- type describes product form, for example Solid Fermented Food, Liquid Fermented
+  Food, Alcoholic Fermented Beverage, or Non-alcoholic Fermented Beverage.
+- source_pdf is the first supporting PDF. source_pdfs contains every supporting PDF.
 
 Example:
+| F0001 | Axone | Fermented Soybean | Solid Fermented Food | Sumi | paper1.pdf |
 
-| 1 | Axone | Fermented Soybean | Solid Fermented Food | Sumi | paper1.pdf |
 
 Table 2: Raw Materials
 
+Core schema:
 | food_id | raw_material | amount | preparation_method |
 
 Example:
+| F0001 | Soybean | null | Boiled before fermentation |
 
-| 1 | Soybean | NA | Boiled and fermented |
 
 Table 3: Geographic Distribution
 
+Core schema:
 | food_id | state | district | ethnic_group | village |
 
 Example:
+| F0001 | Nagaland | Zunheboto | Sumi | Akuluto |
 
-| 1 | Nagaland | Zunheboto | Sumi | Akuluto |
 
-Table 4: Nutrition
+Table 4: Nutrition (long format)
 
+Core schema:
 | food_id | category | parameter | value | unit |
 
-Example:
+Allowed category examples:
+- Proximate Composition
+- Mineral Composition
+- Vitamin Composition
+- Amino Acid Composition
+- Fatty Acid Composition
+- Energy Composition
 
-| 1 | Macronutrient | Protein | 22.5 | g/100g |
-| 1 | Minerals | Protein | 22.5 | g/100g |
-
-
-Table 4 — Nutrition (Generic, long format)
-
-Schema:
-
-| food_id | category | parameter | value | unit |
-
-Example:
-
-food_id	category	parameter	value	unit
-F001	Proximate Composition	Moisture	8.2	%
-F001	Proximate Composition	Protein	22.4	g/100g
-F001	Mineral Composition	Calcium	55	mg
-
-Categories:
-
-Macronutrients
-Micronutrients
-Minerals
-Vitamins
-Bioactive compounds
+Examples:
+| F0001 | Proximate Composition | Moisture | 8.2 | % |
+| F0001 | Proximate Composition | Protein | 22.4 | g/100g |
+| F0001 | Mineral Composition | Calcium | 55 | mg/100g |
 
 
+Table 5: Proximate Composition (wide format, derived from Table 4)
 
-Table 5: Proximate Composition
-
-| entity_type | entity_name | moisture | ash | protein | fat | fiber | carbohydrate |
+Core schema:
+| food_id | entity_type | entity_name | moisture | ash | protein | fat | fiber | carbohydrate |
 
 Example:
+| F0001 | food | Axone | 8.2 % | 1.5 % | 22.1 g/100g | 12.2 g/100g | 5.5 g/100g | 50.2 g/100g |
 
-| food | Axone | 8.2 | 1.5 | 22.1 | 12.2 | 5.5 | 50.2 |
 
 Table 6: Microbiome
 
+Core schema:
 | food_id | taxonomy_level | taxonomy_name |
 
-Example:
+Allowed taxonomy levels:
+- phylum
+- class
+- order
+- family
+- genus
+- species
 
-| 1 | Genus | Lactobacillus |
-| 1 | Species | Lactobacillus plantarum |
+Examples:
+| F0001 | genus | Lactobacillus |
+| F0001 | species | Lactobacillus plantarum |
 
-Taxonomy levels:
-
-Phylum
-Class
-Order
-Family
-Genus
-Species
 
 Table 7: Predominant Microbes
 
+Core schema:
 | food_id | microbe | count | source_pdf |
 
-Example:
+Definition:
+- count preserves the exact abundance, percentage, CFU measurement, population,
+  or other quantity reported by the paper. It is null when predominance is explicit
+  but no quantitative count is supplied.
 
-| 1 | Lactobacillus plantarum | 8 | paper1.pdf |
+Example:
+| F0001 | Lactobacillus plantarum | 8 log CFU/g | paper1.pdf |
+
+
+Provenance fields
+
+Extraction JSON records additionally contain:
+- food_name
+- source_pdf
+- evidence_chunk_ids
+- evidence: chunk_id, source_pdf, page_start, page_end, and section
+
+Food-to-document occurrences are stored separately in food_occurrences.json.

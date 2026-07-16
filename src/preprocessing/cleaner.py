@@ -50,6 +50,9 @@ class MarkdownCleaner:
         for line in lines:
             stripped = line.strip()
 
+            if stripped == "---" or re.fullmatch(r"<!--\s*Page\s+\d+\s*-->", stripped, re.I):
+                continue
+
             # Remove isolated page numbers
             if stripped.isdigit():
                 continue

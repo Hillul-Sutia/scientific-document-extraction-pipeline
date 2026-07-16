@@ -1,104 +1,85 @@
 import re
-from src.utils.logger import setup_logger
 
-logger = setup_logger(__name__)
 
 class SectionSplitter:
+    """Split ordered pages into ordered, page-aware section fragments."""
+
+    REFERENCE_HEADINGS = {
+        "reference",
+        "references",
+        "bibliography",
+        "literature cited",
+    }
+
+    def _normalize_heading(self, heading: str) -> str:
+        heading = heading.strip()
+        heading = re.sub(r"^(?:\*\*|__|[_*])+|(?:\*\*|__|[_*])+$", "", heading)
+        return re.sub(r"\s+", " ", heading).strip()
+
     def _extract_markdown_heading(self, line: str):
-        match = re.match(r'^(#{1,6})\s+(.*)', line)
+        match = re.match(r"^(#{1,6})\s+(.*)", line)
         if match:
-            return match.group(2).strip()
+            return self._normalize_heading(match.group(2))
         return None
 
     def _extract_bold_heading(self, line: str):
-        match = re.match(r'^\*\*(.+?)\*\*$', line)
-        if match:
-            return match.group(1).strip()
+        match = re.match(r"^\*\*(.+?)\*\*$", line)
+        if not match:
+            return None
+
+        candidate = self._normalize_heading(match.group(1))
+        if len(candidate) <= 160:
+            return candidate
         return None
-    
-    
 
-    def split(self, markdown: str) -> dict:
-        """
-        Split markdown into sections based on headings.
-        Returns dictionary:
-        {
-            section_title: section_content
-        }
-        """
+    def _is_reference_heading(self, heading: str) -> bool:
+        normalized = re.sub(r"[^a-z ]", "", heading.lower()).strip()
+        return normalized in self.REFERENCE_HEADINGS
 
-        sections = {}
+    def split(self, pages) -> list[dict]:
+        """
+        Return section fragments in document order.
+
+        Each fragment belongs to a single page so page provenance remains exact.
+        The current heading is carried across page boundaries.
+        """
+        if isinstance(pages, str):
+            pages = [{"page_number": 1, "content": pages}]
+
+        fragments = []
         current_section = "UNSPECIFIED"
-        current_content = []
+        skip_reference_content = False
 
-        lines = markdown.split("\n")
+        for page in pages:
+            page_number = int(page.get("page_number", 1))
+            current_lines = []
 
-        for line in lines:
-            stripped = line.strip()
+            def flush_fragment():
+                nonlocal current_lines
+                content = "\n".join(current_lines).strip()
+                if content and not skip_reference_content:
+                    fragments.append({
+                        "section": current_section,
+                        "page_start": page_number,
+                        "page_end": page_number,
+                        "content": content,
+                    })
+                current_lines = []
 
-            # Detect markdown headings (#, ##, ###)
-            heading = self._extract_markdown_heading(stripped)
+            for line in page.get("content", "").splitlines():
+                stripped = line.strip()
+                heading = self._extract_markdown_heading(stripped)
+                if not heading:
+                    heading = self._extract_bold_heading(stripped)
 
-            # Detect bold headings (**Heading**)
-            if not heading:
-                heading = self._extract_bold_heading(stripped)
-                # logger.info(heading)
+                if heading:
+                    flush_fragment()
+                    current_section = heading
+                    skip_reference_content = self._is_reference_heading(heading)
+                    continue
 
-            if heading:
-                # Save previous section
-                if current_content:
-                    sections[current_section] = "\n".join(current_content).strip()
+                current_lines.append(line)
 
-                current_section = heading
-                current_content = []
-            else:
-                current_content.append(line)
+            flush_fragment()
 
-        # Save final section
-        if current_content:
-            sections[current_section] = "\n".join(current_content).strip()
-
-        # logger.info(f"{sections.keys()}")
-
-        # sections = { k:v for k,v in sections.items() if len(v)!=0  }
-
-        # sections = { k:v for k,v in sections.items() if 'reference' not in k.lower() }
-
-        # sections = { k : v for k, v in sections.items() if k != 'UNSPECIFIED'}
-
-        # sections = { k : v for k, v in sections.items() if not k.startswith('==>')  }
-
-        # sections = { k : v for k, v in sections.items() if any( p not in k.lower() for p in ['citing','citation'])  }
-
-        # sections = { k : v for k, v in sections.items() if any( p not in v.lower() for p in ['citing','citation'])  }
-
-        # return sections
-
-        req_sections = dict()
-        add_section = False
-        remove_section = False
-
-        for k,v in sections.items():
-            temp = k.split()
-            temp = ''.join(temp)
-            if 'abstract' in temp.lower():
-                add_section = True
-                continue
-
-            if 'introduction' in k.lower():
-                req_sections[k] = v
-                add_section = True
-                continue
-            
-            if 'conclusion' in k.lower():
-                remove_section = True
-
-            if add_section:
-                if not remove_section:
-                    req_sections[k] = v
-
-        req_sections = { k:v for k,v in req_sections.items() if 'reference' not in k.lower() }
-        # req_sections = { k : v for k, v in req_sections.items() if not k.startswith('==>')  }
-        
-        return req_sections
-
+        return fragments
