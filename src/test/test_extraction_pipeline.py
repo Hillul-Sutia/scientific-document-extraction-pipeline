@@ -99,6 +99,40 @@ class RetrieverTests(unittest.TestCase):
 
         self.assertEqual([chunk["chunk_id"] for chunk in selected], ["c2", "c3"])
 
+    def test_retriever_logs_candidate_score_breakdown(self):
+        chunks = [
+            make_chunk(
+                "doc", "doc.pdf", "c1",
+                "Kimchi nutritional composition includes protein and moisture.",
+                1,
+            ),
+            make_chunk(
+                "doc", "doc.pdf", "c2",
+                "Additional nutritional composition information.",
+                2,
+            ),
+        ]
+        chunks[0]["chunk_type"] = "table"
+        chunks[0]["next_chunk_id"] = "c2"
+        chunks[1]["previous_chunk_id"] = "c1"
+
+        with self.assertLogs("src.extraction.retriever", level="INFO") as captured:
+            selected = EvidenceRetriever(max_chunks=1).retrieve(
+                "kimchi", chunks, "table4", seed_chunk_ids=["c1"]
+            )
+
+        logs = "\n".join(captured.output)
+        self.assertEqual([chunk["chunk_id"] for chunk in selected], ["c1"])
+        self.assertIn(
+            "Retrieval food=kimchi table=table4 seeds=1 candidates=2 selected=1",
+            logs,
+        )
+        self.assertIn("chunk=c1 rank=1 role=seed base_score=20", logs)
+        self.assertIn("table_bonus=3", logs)
+        self.assertIn("total_score=33 selected=True", logs)
+        self.assertIn("chunk=c2 rank=2 role=neighbor base_score=10", logs)
+        self.assertIn("selected=False", logs)
+
 
 class ExtractionPipelineTests(unittest.TestCase):
     def test_existing_food_ids_are_not_renumbered(self):

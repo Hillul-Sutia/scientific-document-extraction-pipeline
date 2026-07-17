@@ -1,5 +1,10 @@
 import re
 
+from src.utils.logger import setup_logger
+
+
+logger = setup_logger(__name__)
+
 
 TABLE_KEYWORDS = {
     "table1": [
@@ -81,11 +86,59 @@ class EvidenceRetriever:
                 continue
 
             text = f"{chunk.get('section', '')} {chunk.get('caption') or ''} {chunk.get('content', '')}".lower()
-            score = 20 if chunk_id in seed_ids else 10
-            score += sum(2 for keyword in keywords if keyword in text)
-            if chunk.get("chunk_type") == "table" and table in {"table2", "table4", "table6", "table7"}:
-                score += 3
-            candidates.append((score, chunk.get("chunk_index", 0), chunk))
+            role = "seed" if chunk_id in seed_ids else "neighbor"
+            base_score = 20 if role == "seed" else 10
+            matched_keywords = [keyword for keyword in keywords if keyword in text]
+            keyword_score = len(matched_keywords) * 2
+            table_bonus = (
+                3
+                if chunk.get("chunk_type") == "table"
+                and table in {"table2", "table4", "table6", "table7"}
+                else 0
+            )
+            score = base_score + keyword_score + table_bonus
+            candidates.append({
+                "score": score,
+                "chunk_index": chunk.get("chunk_index", 0),
+                "chunk": chunk,
+                "role": role,
+                "base_score": base_score,
+                "matched_keywords": matched_keywords,
+                "keyword_score": keyword_score,
+                "table_bonus": table_bonus,
+            })
 
-        candidates.sort(key=lambda item: (-item[0], item[1]))
-        return [item[2] for item in candidates[:self.max_chunks]]
+        candidates.sort(key=lambda item: (-item["score"], item["chunk_index"]))
+        selected = candidates[:self.max_chunks]
+        selected_ids = {item["chunk"].get("chunk_id") for item in selected}
+
+        logger.info(
+            "Retrieval food=%s table=%s seeds=%s candidates=%s selected=%s "
+            "max_chunks=%s",
+            food_name,
+            table,
+            len(seed_ids),
+            len(candidates),
+            len(selected),
+            self.max_chunks,
+        )
+        for rank, item in enumerate(candidates, start=1):
+            chunk = item["chunk"]
+            logger.info(
+                "Retrieval score food=%s table=%s chunk=%s rank=%s role=%s "
+                "base_score=%s matched_keywords=%s keyword_score=%s "
+                "table_bonus=%s total_score=%s selected=%s",
+                food_name,
+                table,
+                chunk.get("chunk_id"),
+                rank,
+                item["role"],
+                item["base_score"],
+                item["matched_keywords"],
+                item["keyword_score"],
+                item["table_bonus"],
+                item["score"],
+                chunk.get("chunk_id") in selected_ids,
+            )
+
+        return [item["chunk"] for item in selected]
