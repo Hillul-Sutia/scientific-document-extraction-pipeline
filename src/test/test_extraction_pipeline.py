@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from src.extraction.evidence_verifier import EvidenceVerifier
 from src.extraction.pipeline import ExtractionPipeline
 from src.extraction.retriever import EvidenceRetriever
 
@@ -134,6 +135,89 @@ class RetrieverTests(unittest.TestCase):
         self.assertIn("selected=False", logs)
 
 
+class EvidenceVerifierTests(unittest.TestCase):
+    def test_nutrition_fields_are_verified_in_cited_chunk(self):
+        chunks = [make_chunk(
+            "doc", "doc.pdf", "c1",
+            "| Nutrient | Value | Unit |\n| Protein | 2.1 | g / 100 g |",
+        )]
+        record = {
+            "category": "Proximate Composition",
+            "parameter": "Protein",
+            "value": "2.1",
+            "unit": "g/100g",
+            "evidence_chunk_ids": ["c1"],
+        }
+
+        verified = EvidenceVerifier("table4").verify(record, chunks)
+
+        self.assertIsNotNone(verified)
+        self.assertEqual(
+            verified["evidence_verification"]["fields"]["unit"],
+            "normalized",
+        )
+        self.assertEqual(
+            verified["evidence_verification"]["fields"]["category"],
+            "derived_not_present",
+        )
+        self.assertEqual(
+            verified["evidence_verification"]["status"],
+            "verified_with_derived_fields",
+        )
+
+    def test_required_value_outside_cited_chunk_is_rejected(self):
+        chunks = [
+            make_chunk("doc", "doc.pdf", "c1", "Kimchi was analyzed.", 1),
+            make_chunk("doc", "doc.pdf", "c2", "Protein was 2.1 g/100g.", 2),
+        ]
+        record = {
+            "category": "Proximate Composition",
+            "parameter": "Protein",
+            "value": "2.1",
+            "unit": "g/100g",
+            "evidence_chunk_ids": ["c1"],
+        }
+
+        verified = EvidenceVerifier("table4").verify(record, chunks)
+
+        self.assertIsNone(verified)
+
+    def test_unsupported_optional_field_is_removed(self):
+        chunks = [make_chunk(
+            "doc", "doc.pdf", "c1",
+            "Kimchi is prepared from cabbage.",
+        )]
+        record = {
+            "raw_material": "cabbage",
+            "amount": "10 kg",
+            "preparation_method": None,
+            "evidence_chunk_ids": ["c1"],
+        }
+
+        verified = EvidenceVerifier("table2").verify(record, chunks)
+
+        self.assertIsNotNone(verified)
+        self.assertIsNone(verified["amount"])
+        self.assertEqual(
+            verified["evidence_verification"]["fields"]["amount"],
+            "unsupported_removed",
+        )
+
+    def test_missing_required_raw_material_rejects_record(self):
+        chunks = [make_chunk(
+            "doc", "doc.pdf", "c1",
+            "Kimchi was fermented for three days.",
+        )]
+        record = {
+            "raw_material": "cabbage",
+            "amount": None,
+            "preparation_method": None,
+            "evidence_chunk_ids": ["c1"],
+        }
+
+        self.assertIsNone(EvidenceVerifier("table2").verify(record, chunks))
+
+
 class ExtractionPipelineTests(unittest.TestCase):
     def test_existing_food_ids_are_not_renumbered(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -203,6 +287,8 @@ class ExtractionPipelineTests(unittest.TestCase):
             self.assertEqual(table1[0]["source_pdfs"], ["paper-one.pdf", "paper-two.pdf"])
             self.assertEqual({item["raw_material"] for item in table2}, {"cabbage", "radish"})
             self.assertTrue(all(item["evidence"] for item in table2))
+            self.assertTrue(all(item["evidence_verification"] for item in table2))
+            self.assertIn("evidence_verification", table1[0])
             self.assertEqual(len(table5), 2)
             self.assertEqual(failures, [])
 

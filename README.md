@@ -179,6 +179,98 @@ The response is parsed as JSON and validated with Pydantic. Empty records and
 records without a valid supporting chunk ID are discarded. Valid records are
 enriched with food ID, food name, source PDF, pages, section, and evidence.
 
+After schema validation, `EvidenceVerifier` checks every extracted value against
+only the chunks listed in that record's `evidence_chunk_ids`. Matching is
+boundary-aware and accepts exact text, case/whitespace normalization, and
+spacing-only unit variants such as `g / 100 g` versus `g/100g`. It does not use
+fuzzy or semantic matching.
+
+- Missing required source values reject the complete record. Required examples
+  include raw material, nutrition parameter/value, taxonomy name, and microbe.
+- Missing optional values are replaced with `null` instead of being saved as
+  supported data.
+- Normalized classifications such as food category, food type, nutrition
+  category, and taxonomy level may not be literal source phrases. They are
+  retained but explicitly labeled `derived_not_present` rather than verified as
+  quotations.
+- If a value exists in another retrieved chunk but not in the chunks cited by
+  the record, it does not pass verification.
+
+Accepted records contain `evidence_verification`, for example:
+
+```json
+{
+  "status": "verified_with_derived_fields",
+  "fields": {
+    "category": "derived_not_present",
+    "parameter": "exact",
+    "value": "exact",
+    "unit": "normalized"
+  },
+  "cited_chunk_ids": ["paper_c00042_ab12cd34"]
+}
+```
+
+Verification removals and rejections are written to the console and
+`logs/src_extraction_evidence_verifier.log`.
+
+### Independent post-extraction verification
+
+After extraction has completed, the saved tables can be audited again without
+running Ollama, ingestion, preprocessing, or extraction:
+
+```powershell
+uv run python verify.py
+```
+
+The command reads `data/chunks` and `data/tables`, leaves the original tables
+unchanged, and writes:
+
+```text
+data/verification/
+|-- verified/
+|   |-- table1.json
+|   |-- table2.json
+|   |-- table3.json
+|   |-- table4.json
+|   |-- table5.json
+|   |-- table6.json
+|   `-- table7.json
+|-- rejected/
+|   |-- table1.json
+|   |-- table2.json
+|   |-- table3.json
+|   |-- table4.json
+|   |-- table5.json
+|   |-- table6.json
+|   `-- table7.json
+`-- verification_summary.json
+```
+
+Records whose required values are absent are written to `rejected`. Records
+with missing or stale chunk IDs are labeled `unverifiable` with reason
+`evidence_chunk_not_found`. Unsupported optional fields are set to `null` in the
+verified copy, and the source record remains available inside the rejection
+entry when a complete record is rejected.
+
+Table 1 supports its merged `evidence` representation and also checks that the
+food name occurs in the evidence. Table 5 is not searched directly against
+chunks; each value must have lineage to an accepted Table 4 record for the same
+food, source PDF, parameter, value, and unit.
+
+Custom locations can be supplied when auditing archived results:
+
+```powershell
+uv run python verify.py `
+  --chunks-dir path/to/chunks `
+  --tables-dir path/to/tables `
+  --output-dir path/to/verification
+```
+
+The standalone audit can be rerun whenever verification rules change, without
+repeating expensive LLM calls. It requires the original chunk files whose IDs
+are referenced by the extracted records.
+
 If an Ollama request times out, the extractor retries with half as many evidence
 chunks until only one remains. Other extraction failures are recorded in
 `extraction_failures.json`, and the pipeline continues. Outputs are saved after
