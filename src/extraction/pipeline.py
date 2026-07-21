@@ -199,12 +199,23 @@ class ExtractionPipeline:
                 continue
             if master[field] is None:
                 master[field] = value
+                field_status = record.get("evidence_verification", {}).get(
+                    "fields", {}
+                ).get(field)
+                master["evidence_verification"]["fields"][field] = {
+                    "status": field_status,
+                    "source_pdf": record["source_pdf"],
+                    "evidence_chunk_ids": record.get("evidence_chunk_ids", []),
+                }
             elif master[field].casefold() != value.casefold():
                 conflict = {
                     "field": field,
                     "existing": master[field],
                     "candidate": value,
                     "source_pdf": record["source_pdf"],
+                    "verification_status": record.get(
+                        "evidence_verification", {}
+                    ).get("fields", {}).get(field),
                 }
                 if conflict not in master["conflicts"]:
                     master["conflicts"].append(conflict)
@@ -310,6 +321,10 @@ class ExtractionPipeline:
                 "category": None, "type": None, "ethnic_group": None,
                 "source_pdf": None, "source_pdfs": [], "evidence": [],
                 "conflicts": [],
+                "evidence_verification": {
+                    "food_name": "exact_in_discovery_chunk",
+                    "fields": {},
+                },
             }
             for food in foods
         }

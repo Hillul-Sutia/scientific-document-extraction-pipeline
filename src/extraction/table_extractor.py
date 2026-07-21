@@ -1,5 +1,6 @@
 from pydantic import TypeAdapter, ValidationError
 
+from src.extraction.evidence_verifier import EvidenceVerifier
 from src.extraction.json_utils import parse_json_response
 from src.utils.logger import setup_logger
 
@@ -54,6 +55,7 @@ class StructuredTableExtractor:
         self.llm_client = llm_client
         self.table = table
         self.adapter = TypeAdapter(list[record_model])
+        self.evidence_verifier = EvidenceVerifier(table)
 
     def _prepare_prompt(self, food_name: str, chunks: list[dict]) -> str:
         evidence = []
@@ -136,10 +138,13 @@ Evidence:
         validated = []
         for record in records:
             data = record.model_dump()
+            data = self.evidence_verifier.verify(data, working_chunks)
+            if data is None:
+                continue
             meaningful_values = [
                 value
                 for key, value in data.items()
-                if key != "evidence_chunk_ids"
+                if key not in {"evidence_chunk_ids", "evidence_verification"}
             ]
             if not any(
                 value is not None and str(value).strip()
