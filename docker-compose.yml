@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    working_dir: /app
+
+    volumes:
+      - .:/app
+      - uv-cache:/root/.cache/uv
+      - ./.cache/huggingface:/opt/huggingface
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434
+      # OLLAMA_HOST: http://0.0.0.0:11434
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      HF_HOME: /opt/huggingface
+      TOKENIZER_LOCAL_FILES_ONLY: "true"
+      TOKENIZER_DOWNLOAD_IF_MISSING: "true"
+
+    stdin_open: true
+    tty: true
+    command: python main.py
+
+volumes:
+  uv-cache:
